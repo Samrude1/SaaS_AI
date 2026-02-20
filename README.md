@@ -1,40 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# 🏥 MediNotes Pro — AI-Powered Healthcare Assistant
 
-## Getting Started
+**MediNotes Pro** on ammattitasoinen SaaS-sovellus, joka on suunniteltu auttamaan lääkäreitä ja terveydenhuollon ammattilaisia optimoimaan potilaskirjausten tekemistä. Sovellus muuntaa vapaamuotoiset vastaanotto-muistiinpanot jäsennellyksi lääketieteelliseksi dokumentaatioksi ja potilasviestinnäksi.
 
-First, run the development server:
+![Status](https://img.shields.io/badge/Status-Cloud%20Production-success?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)
+![AWS](https://img.shields.io/badge/AWS-App%20Runner-FF9900?style=for-the-badge&logo=amazon-aws)
+![AI](https://img.shields.io/badge/AI-Gemini%202.5%20Flash--Lite-4285F4?style=for-the-badge&logo=google-gemini)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Tärkeimmät ominaisuudet
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+- **📋 Automaattiset yhteenvedot**: Luo lääketieteelliset yhteenvedot suoraan potilaskertomukseen.
+- **🚀 Jatkotoimenpiteet**: Tunnistaa automaattisesti lääkärin määräämät jatko-ohjeet ja tutkimukset.
+- **📧 Potilasystävällinen viestintä**: Luonnostelee selkokielisen sähköpostiviestin potilaalle ymmärrettävässä muodossa.
+- **🛡️ Turvallinen arkkitehtuuri**: Käyttäjänhallinta ja suojatut rajapinnat (Clerk Auth).
+- **⚡ Reaaliaikainen analyysi**: Hyödyntää striimaavaa tekoälyä (Server-Sent Events) välittömään palautteeseen.
+- **🐳 Kontitettu julkaisu**: Toimii identtisesti missä tahansa ympäristössä Dockerin avulla.
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+---
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## 🛠️ Tekninen toteutus
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Arkkitehtuuri
+Sovellus käyttää **unified container** -mallia, jossa Python-backend tarjoilee sekä API-rajapinnan että staattisesti käännetyn Next.js-frontendin.
 
-## Learn More
+### Frontend (Next.js)
+- **Staattinen export**: Optimoitu suorituskyky ja itsenäinen jakelu.
+- **Käyttöliittymä**: Moderni Dark Mode, Glassmorphism ja Framer Motion -animaatiot.
+- **Autentikaatio**: Clerk Provider integraatio.
 
-To learn more about Next.js, take a look at the following resources:
+### Backend (FastAPI)
+- **AI-moottori**: Google Gemini 2.5 Flash-Lite (optimoitu nopeuteen ja ilmaisversion korkeisiin käyttövaroihin).
+- **Turvallisuus**: JWT-validointi jokaisessa pyynnössä.
+- **Health Checks**: AWS App Runner -yhteensopiva valvonta.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Käyttöönotto (Docker)
 
-## Deploy on Vercel
+1. **Konfiguroi ympäristö**: Kopioi `.env.local` arvot `.env` -tiedostoon.
+2. **Rakenna kuva**:
+   ```powershell
+   docker build --platform linux/amd64 -t medinotes-pro .
+   ```
+3. **Aja paikallisesti**:
+   ```powershell
+   docker run -p 8000:8000 --env-file .env medinotes-pro
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## ☁️ Pilvijulkaisu (AWS)
+Tämä projekti on suunniteltu julkaistavaksi **AWS App Runner** -palveluun käyttäen **Amazon ECR** -konttirekisteriä. Tarkemmat ohjeet siirtoon löytyvät tiedostosta [docs/vercel-to-aws-migration.md](./docs/vercel-to-aws-migration.md).
+
+---
+
+**Kehittäjä**: Sami Rautanen  
+**Projektin tila**: Tuotantovalmis pilvijulkaisu
