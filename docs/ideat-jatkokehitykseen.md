@@ -26,10 +26,54 @@ Valmennustapaamisen huomiot syötetään sovellukseen. Sovellus tuottaa:
 - **Ravinto-ohje**: Päivitetyt kalorit ja makrot seuraavalle viikolle.
 - **Motivaatioviesti**: Kannustava ja henkilökohtainen palaute asiakkaalle.
 
-## ✍️ Miten nämä toteutetaan teknisesti?
-Kaikissa näissä tapauksissa sovelluksen koodin runko pysyy samana:
-1.  **Backend**: Vaihda `api/server.py` tiedostossa `system_prompt` vastaamaan uutta roolia (esim. "Olet kokenut lakimies...").
-2.  **Frontend**: Vaihda `pages/product.tsx` tiedostossa labelit (esim. "Patient Name" -> "Asiakkaan nimi", "Visit Notes" -> "Tapaamisen havainnot").
-3.  **Docker & AWS**: Koska arkkitehtuuri on jo valmis, uuden version julkaisu on vain uusi `docker build` ja `push`.
+## ✅ Miten muokata tämä sovellus muihin tarkoituksiin?
+Kaikissa yllä olevissa tapauksissa sovelluksen koodin runko pysyy samana:
+1.  **Backend**: Vaihda `api/server.py` tiedostossa `system_prompt` vastaamaan uutta roolia.
+2.  **Frontend**: Vaihda `pages/product.tsx` tiedostossa lomakkeen labelit.
+3.  **Docker & AWS**: Arkkitehtuuri on jo valmis — uuden version julkaisu on vain uusi `docker build` ja `push`.
 
-**Tämä arkkitehtuuri on "Sveitsin linkkuveitsi" mille tahansa alalle, jossa asiantuntija täyttää manuaalisesti raportteja!**
+---
+
+## 🎯 Portfolion vahvistaminen AI Engineer -roolia varten
+
+Seuraavat lisäykset nostavat tämän projektin harjoituksesta vakavasti otettavaksi portfoliotyöksi. Ne on järjestetty vaikutusten mukaan, tärkeimmät ensin.
+
+### 1. 🧠 Vaihda tai vertaile AI-malleja (High Impact)
+Nykyinen toteutus käyttää Geminiä. AI Engineer osaa valita oikean työkalun oikeaan tehtävään. Lisää README:hen (tai erilliseen raporttiin) **Model Comparison** -näkökulma:
+- Testaa sama prompt **GPT-4o**:lla, **Gemini 2.5 Flash-Litella** ja **Anthropic Claudella**.
+- Dokumentoi tulokset: Laatu, nopeus, hinta per 1000 pyyntöä.
+- Toteuta sovellukseen dropdown-valitsin, jolla käyttäjä voi valita mallin.
+- **Miksi tärkeää?** AI Engineer -roolissa tärkein taito on juuri tämä vertailu ja perusteleminen.
+
+### 2. 📊 Observability & Logging (High Impact)
+Tuotantosovelluksessa pitää tietää, mitä tapahtuu. Lisää:
+- **Token-laskuri**: Laske ja lokita jokaisen pyynnön token-kulutus ja hinta.
+- **Latency-mittari**: Kirjaa kuinka kauan kukin API-kutsu kestää.
+- **Virheloki**: Lähetä virheet esim. Sentry-palveluun (ilmainen tier).
+- **Miksi tärkeää?** Ilman tätä et voi optimoida sovellusta tuotannossa. Tämä erottaa harrastajaprojektin oikeasta tuotantosovelluksesta.
+
+### 3. 🧪 Prompt Engineering -dokumentaatio (Medium Impact)
+AI Engineerin arvokkain taito on prompting. Luo `docs/prompt-engineering.md`:
+- Mikä oli alkuperäinen prompt ja miksi se ei toiminut?
+- Mitä muutoksia tehtiin ja miksi?
+- Näytä konkreettisesti, miten promptin muutos paransi tulosta.
+- **Miksi tärkeää?** Tämä osoittaa, että osaat tehdä systemaattista insinöörityötä AI:n kanssa.
+
+### 4. 🔍 RAG (Retrieval-Augmented Generation) -lisäys (High Impact)
+Tämä on yksi haetuin AI Engineer -taito. Lisää sovellukseen:
+- Mahdollisuus ladata PDF-dokumentti (esim. hoitosuositus tai lakipykälä).
+- Tekoäly viittaa yhteenvedossaan ladattuun dokumenttiin.
+- Teknisesti: `LangChain` tai `LlamaIndex` + vector store (esim. ChromaDB).
+- **Miksi tärkeää?** RAG on se juttu, jota yritykset rakentavat eniten tällä hetkellä.
+
+### 5. ✅ Testit ja CI/CD (Medium Impact)
+Ammattimaiseen projektiin kuuluu automaattiset testit:
+- Kirjoita muutama yksikkötesti Python-backendille (`pytest`).
+- Lisää GitHub Actions -tiedosto, joka ajaa testit automaattisesti joka `git push` yhteydessä.
+- **Miksi tärkeää?** Osoittaa, että tunnet ohjelmistokehityksen parhaat käytännöt.
+
+---
+
+### Prioriteettisuositus
+Jos sinulla on aikaa tehdä vain yksi asia, valitse **Model Comparison** (kohta 1). Se on konkreettisin osoitus siitä, mitä AI Engineer oikeasti tekee päivittäin.
+

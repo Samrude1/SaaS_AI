@@ -73,64 +73,161 @@ body {
 @layer base {
   .markdown-content {
     color: #e2e8f0;
-    line-height: 1.8;
-    font-size: 1.1rem;
+    line-height: 1.75;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
   }
 
   .markdown-content h1 {
-    font-size: 2.5rem;
-    font-weight: 900;
-    margin-bottom: 2rem;
-    margin-top: 1rem;
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    margin-top: 0.5rem;
     color: #ffffff;
-    background: linear-gradient(to bottom right, #ffffff, #818cf8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
   }
 
   .markdown-content h2 {
-    @apply text-3xl font-bold mt-12 mb-6 text-indigo-400;
-    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #c4b5fd;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.2);
     padding-bottom: 0.5rem;
   }
 
   .markdown-content h3 {
-    @apply text-xl font-bold mt-8 mb-4 text-sky-400 flex items-center gap-2;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: #a78bfa;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
   }
 
   .markdown-content p {
-    margin-bottom: 1.5rem;
-    color: #f1f5f9;
-    /* Increased contrast to slate-100 */
+    margin-bottom: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.7;
   }
 
   .markdown-content ul {
-    @apply mb-8 space-y-4;
+    margin-bottom: 1.25rem;
+    padding-left: 0;
+    list-style: none;
   }
 
-  .markdown-content li {
-    @apply relative pl-8;
-    color: #f1f5f9;
+  .markdown-content ul li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
   }
 
-  .markdown-content li::before {
-    content: "✨";
-    @apply absolute left-0 top-1 text-indigo-500 scale-90;
+  .markdown-content ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0.25rem;
+    top: 0;
+    color: #a78bfa;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+
+  .markdown-content ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+    color: #cbd5e1;
+  }
+
+  .markdown-content ol li {
+    margin-bottom: 0.5rem;
   }
 
   .markdown-content strong {
-    @apply font-bold text-white;
+    font-weight: 700;
+    color: #f1f5f9;
   }
 
+  .markdown-content em {
+    color: #a78bfa;
+    font-style: italic;
+  }
+
+  /* ── Tables ── */
+  .markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .markdown-content thead {
+    background: rgba(139, 92, 246, 0.12);
+  }
+
+  .markdown-content th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  }
+
+  .markdown-content td {
+    padding: 0.65rem 1rem;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .markdown-content tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .markdown-content tbody tr:hover {
+    background: rgba(139, 92, 246, 0.06);
+  }
+
+  /* ── Horizontal Rule ── */
   .markdown-content hr {
-    @apply my-12 border-0 h-px;
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 1.5rem 0;
+    border: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(139, 92, 246, 0.3), transparent);
+  }
+
+  /* ── Blockquote ── */
+  .markdown-content blockquote {
+    border-left: 3px solid #8b5cf6;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    background: rgba(139, 92, 246, 0.06);
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: #cbd5e1;
+  }
+
+  /* ── Code ── */
+  .markdown-content code {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+    color: #c4b5fd;
   }
 
   .markdown-content h1:first-child {
-    @apply mt-0;
+    margin-top: 0;
   }
 }
 

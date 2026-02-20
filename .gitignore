@@ -40,4 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# docker
+/static
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# misc logs
+build_log.txt
+docker_logs.txt
+
+# docs - päiväkirjat, ideat, tarinat (ei projektilähdekoodia)
+/docs
