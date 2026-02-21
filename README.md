@@ -1,60 +1,101 @@
-# 🤝 MeetingMind Pro — AI-Powered Meeting Assistant
+# 🤝 MeetingMind Pro — Enterprise AI Meeting Intelligence
 
-**MeetingMind Pro** on ammattitasoinen SaaS-sovellus, joka on suunniteltu auttamaan tiimejä ja asiantuntijoita optimoimaan kokousmuistioiden tekemistä. Sovellus muuntaa vapaamuotoiset kokousmuistiinpanot jäsennellyiksi päätöksiksi, tehtäviksi ja viestinnäksi.
-
-![Status](https://img.shields.io/badge/Status-Cloud%20Production-success?style=for-the-badge)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)
-![AWS](https://img.shields.io/badge/AWS-App%20Runner-FF9900?style=for-the-badge&logo=amazon-aws)
-![AI](https://img.shields.io/badge/AI-Gemini%202.5%20Flash--Lite-4285F4?style=for-the-badge&logo=google-gemini)
+**MeetingMind Pro** is a high-performance SaaS application designed to transform raw, unstructured meeting notes into professional, actionable summaries. It leverages state-of-the-art LLMs via **OpenRouter**, featuring real-time reasoning visualization and cross-model performance tracking.
 
 ---
 
-## ✨ Tärkeimmät ominaisuudet
+## 🏗️ Technical Architecture
 
-- **📋 Automaattiset yhteenvedot**: Tunnistaa ja listaa kokouksen keskeiset päätökset.
-- **🚀 Action Items**: Poimii automaattisesti delegoidut tehtävät vastuuhenkilöineen.
-- **📧 Valmis viestintä**: Luonnostelee tiiviit Slack-päivitykset ja sähköpostit osallistujille.
-- **🛡️ Turvallinen arkkitehtuuri**: Käyttäjänhallinta ja suojatut rajapinnat (Clerk Auth).
-- **⚡ Reaaliaikainen analyysi**: Hyödyntää striimaavaa tekoälyä (Server-Sent Events) välittömään palautteeseen.
-- **🐳 Kontitettu julkaisu**: Toimii identtisesti missä tahansa ympäristössä Dockerin avulla.
+The application is built on a **Unified Container Architecture**, optimized for cost-effective deployment on **AWS App Runner**.
 
----
+- **Frontend**: Next.js 16.1.6 (Pages Router) using Static HTML Export for maximum performance.
+- **Backend**: FastAPI (Python 3.12) serving both the API and the static frontend assets.
+- **AI Integration**: Unified OpenRouter interface supporting Gemini, Claude, GPT-4o, and DeepSeek.
+- **Security**: Robust JWT-based authentication via **Clerk**.
+- **Communication**: Server-Sent Events (SSE) for low-latency, real-time token streaming.
 
-## 🛠️ Tekninen toteutus
-
-### Arkkitehtuuri
-Sovellus käyttää **unified container** -mallia, jossa Python-backend tarjoilee sekä API-rajapinnan että staattisesti käännetyn Next.js-frontendin.
-
-### Frontend (Next.js)
-- **Staattinen export**: Optimoitu suorituskyky ja itsenäinen jakelu.
-- **Käyttöliittymä**: Moderni Dark Mode, Glassmorphism ja Framer Motion -animaatiot.
-- **Autentikaatio**: Clerk Provider integraatio.
-
-### Backend (FastAPI)
-- **AI-moottori**: Google Gemini 2.5 Flash-Lite (optimoitu nopeuteen ja ilmaisversion korkeisiin käyttövaroihin).
-- **Turvallisuus**: JWT-validointi jokaisessa pyynnössä.
-- **Health Checks**: AWS App Runner -yhteensopiva valvonta.
+### Project Structure
+```text
+.
+├── api/                # FastAPI Backend
+│   └── server.py       # Core logic, SSE streaming & Auth
+├── pages/              # Next.js Frontend
+│   └── product.tsx     # Main AI Dashboard & SSE Client
+├── docs/               # Technical documentation & guides
+├── public/             # Static assets
+├── Dockerfile          # Multi-stage production build
+└── requirements.txt    # Python dependencies
+```
 
 ---
 
-## 🚀 Käyttöönotto (Docker)
+## 🧠 AI Engineering Features
 
-1. **Konfiguroi ympäristö**: Kopioi `.env.local` arvot `.env` -tiedostoon.
-4. **Build the image (requires auth key for Next.js prerender)**:
-   ```powershell
-   $env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = (Get-Content .env | Select-String "^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=").ToString().Split("=")[1]; docker build --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --platform linux/amd64 -t meetingmind-pro .
-   ```
-3. **Aja paikallisesti**:
-   ```powershell
-   docker run -p 8000:8000 --env-file .env meetingmind-pro
-   ```
+### 1. Multi-Model Support (OpenRouter)
+Seamlessly switch between top-tier models with a single implementation.
+- **Reasoning Models**: DeepSeek R1 & o1 support with native **Chain-of-Thought** visualization.
+- **Performance Models**: Gemini 2.5 Flash & Claude 3.5 Sonnet.
 
----
+### 2. Transparent Reasoning (CoT)
+One of the core portfolio highlights is the **Real-Time Cognitive Process** view. The system parses specific reasoning tokens from the SSE stream and renders them in a dedicated terminal-style UI, allowing users to see the AI's internal logic before the final output.
 
-## ☁️ Pilvijulkaisu (AWS)
-Tämä projekti on suunniteltu julkaistavaksi **AWS App Runner** -palveluun käyttäen **Amazon ECR** -konttirekisteriä. Tarkemmat ohjeet siirtoon löytyvät tiedostosta [docs/vercel-to-aws-migration.md](./docs/vercel-to-aws-migration.md).
+### 3. Observability & Latency Tracking
+The backend tracks end-to-end processing time for every request, providing visibility into model performance and latency metrics directly in the UI.
 
 ---
 
-**Kehittäjä**: Sami Rautanen  
-**Projektin tila**: Tuotantovalmis pilvijulkaisu
+## 🛡️ Security & Authentication
+
+Security is "Secure by Default":
+- **Clerk Integration**: Full user lifecycle management.
+- **JWT Validation**: The FastAPI backend validates every incoming request's Bearer token against Clerk's JWKS.
+- **Environment Isolation**: Secure handling of API keys and environment-specific bypasses for local development.
+
+---
+
+## 🚀 Installation & Local Development
+
+### Prerequisites
+- Docker Desktop
+- OpenRouter API Key
+- Clerk Publishable & Secret Keys
+
+### Environment Setup
+Create a `.env` file in the root:
+```env
+OPENROUTER_API_KEY=sk-or-v1-...
+CLERK_JWKS_URL=https://.../.well-known/jwks.json
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+ENVIRONMENT=development
+```
+
+### Building the Unified Container
+Next.js static export requires the Clerk Publishable Key at build time for prerendering. Use the following command in PowerShell:
+
+```powershell
+# Extract key from .env and build
+$env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = (Get-Content .env | Select-String "^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=").ToString().Split("=")[1]; `
+docker build --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --platform linux/amd64 -t meetingmind-pro .
+```
+
+### Running Locally
+```powershell
+docker run -p 8000:8000 --env-file .env meetingmind-pro
+```
+Access the application at `http://localhost:8000`.
+
+---
+
+## ☁️ Deployment
+
+The project is optimized for **AWS App Runner**:
+1. Build the Docker image for `linux/amd64`.
+2. Push to **Amazon ECR**.
+3. Deploy as a service to App Runner, mapping port `8000`.
+
+For detailed migration steps, see [docs/vercel-to-aws-migration.md](./docs/vercel-to-aws-migration.md).
+
+---
+
+**Developed by**: Sami Rautanen  
+**Positioning**: AI Engineer / SaaS Multi-Model Platform 🚀
