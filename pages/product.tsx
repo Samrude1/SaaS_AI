@@ -12,8 +12,11 @@ import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 
 const MODELS = [
-    { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite', badge: 'Fast · Free', color: 'text-blue-400' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini', badge: 'Accurate', color: 'text-emerald-400' },
+    { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', badge: 'Fast · Free', color: 'text-blue-400' },
+    { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', badge: 'Best Overall', color: 'text-amber-400' },
+    { value: 'openai/gpt-4o', label: 'GPT-4o', badge: 'Accurate', color: 'text-emerald-400' },
+    { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B', badge: 'Open Source', color: 'text-rose-400' },
+    { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1', badge: 'Reasoning CoT', color: 'text-fuchsia-400' }
 ];
 
 function MeetingForm() {
@@ -22,15 +25,20 @@ function MeetingForm() {
     const [topic, setTopic] = useState('');
     const [meetingDate, setMeetingDate] = useState<Date | null>(new Date());
     const [notes, setNotes] = useState('');
-    const [model, setModel] = useState('gemini-2.5-flash-lite');
+    const [model, setModel] = useState('anthropic/claude-3.5-sonnet');
     const [output, setOutput] = useState('');
+    const [thinkingOutput, setThinkingOutput] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isThinkingActive, setIsThinkingActive] = useState(false);
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setIsGenerating(true);
         setOutput('');
-        let buffer = '';
+        setThinkingOutput('');
+        setIsThinkingActive(false);
+        let textBuffer = '';
+        let thinkBuffer = '';
 
         const jwt = await getToken();
         if (!jwt) { setOutput('Authentication required'); setIsGenerating(false); return; }
@@ -48,12 +56,29 @@ function MeetingForm() {
                     model,
                 }),
                 onmessage(ev) {
-                    try { buffer += JSON.parse(ev.data); }
-                    catch { buffer += ev.data; }
-                    setOutput(buffer);
+                    try {
+                        const payload = JSON.parse(ev.data);
+                        if (payload.type === 'thinking') {
+                            setIsThinkingActive(true);
+                            thinkBuffer += payload.content;
+                            setThinkingOutput(thinkBuffer);
+                        } else if (payload.type === 'text') {
+                            setIsThinkingActive(false);
+                            textBuffer += payload.content;
+                            setOutput(textBuffer);
+                        } else if (payload.type === 'error') {
+                            textBuffer += "\\n**Error:** " + payload.content;
+                            setOutput(textBuffer);
+                        }
+                    }
+                    catch {
+                        // Syksyyn/vanhaan string-formaattiin yhteensopivuus
+                        textBuffer += ev.data;
+                        setOutput(textBuffer);
+                    }
                 },
-                onclose() { setIsGenerating(false); },
-                onerror(err) { console.error('SSE error:', err); controller.abort(); setIsGenerating(false); }
+                onclose() { setIsGenerating(false); setIsThinkingActive(false); },
+                onerror(err) { console.error('SSE error:', err); controller.abort(); setIsGenerating(false); setIsThinkingActive(false); }
             });
         } catch (error) {
             console.error('Submission failed:', error);
@@ -161,7 +186,31 @@ function MeetingForm() {
                 </motion.div>
 
                 {/* ── Output Side ── */}
-                <div className="relative min-h-[600px]">
+                <div className="relative min-h-[600px] flex flex-col gap-6">
+
+                    {/* Thinking Process Panel */}
+                    <AnimatePresence>
+                        {thinkingOutput && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="glass p-6 rounded-3xl border-fuchsia-500/20 shadow-[0_0_30px_rgba(217,70,239,0.1)] overflow-hidden"
+                            >
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Sparkles className="w-4 h-4 text-fuchsia-400 animate-pulse" />
+                                    <span className="text-fuchsia-400 font-mono text-sm uppercase tracking-wider font-bold">
+                                        Model Cognitive Process {isThinkingActive && '...'}
+                                    </span>
+                                </div>
+                                <div className="font-mono text-xs text-slate-400 bg-slate-950/50 p-4 rounded-xl max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-white/5">
+                                    {thinkingOutput}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Final Output Panel */}
                     <AnimatePresence mode="wait">
                         {output || isGenerating ? (
                             <motion.div
@@ -198,18 +247,20 @@ function MeetingForm() {
                                 )}
                             </motion.div>
                         ) : (
-                            <motion.div
-                                key="empty"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="h-full flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-white/5 rounded-[2.5rem]"
-                            >
-                                <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center mb-6">
-                                    <FileText className="w-10 h-10 text-slate-700" />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-400 mb-2">No summary yet</h3>
-                                <p className="text-slate-600 max-w-xs">Fill in the form and hit Generate to see your structured meeting output here.</p>
-                            </motion.div>
+                            !thinkingOutput && (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="h-full flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-white/5 rounded-[2.5rem] mt-auto mb-auto min-h-[500px]"
+                                >
+                                    <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center mb-6">
+                                        <FileText className="w-10 h-10 text-slate-700" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-400 mb-2">No summary yet</h3>
+                                    <p className="text-slate-600 max-w-xs">Fill in the form and hit Generate to see your structured meeting output here.</p>
+                                </motion.div>
+                            )
                         )}
                     </AnimatePresence>
                 </div>

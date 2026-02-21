@@ -40,9 +40,9 @@ Sovellus käyttää **unified container** -mallia, jossa Python-backend tarjoile
 ## 🚀 Käyttöönotto (Docker)
 
 1. **Konfiguroi ympäristö**: Kopioi `.env.local` arvot `.env` -tiedostoon.
-2. **Rakenna kuva**:
+4. **Build the image (requires auth key for Next.js prerender)**:
    ```powershell
-   docker build --platform linux/amd64 -t meetingmind-pro .
+   $env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = (Get-Content .env | Select-String "^NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=").ToString().Split("=")[1]; docker build --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$env:NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY --platform linux/amd64 -t meetingmind-pro .
    ```
 3. **Aja paikallisesti**:
    ```powershell

@@ -13,10 +13,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure Gemini
-api_key = os.getenv("GOOGLE_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+# Note: Both Google and OpenAI models are now served via OpenRouter
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 app = FastAPI(title="MeetingMind Pro API")
 
@@ -40,14 +38,19 @@ clerk_guard = ClerkHTTPBearer(clerk_config)
 # ------------- Models & Prompts -------------
 
 AVAILABLE_MODELS = {
-    "gemini-2.5-flash-lite": "Gemini 2.5 Flash-Lite",
-    "gpt-4o-mini":           "GPT-4o Mini",
+    "google/gemini-2.5-flash": "Gemini 2.5 Flash",
+    "anthropic/claude-3.5-sonnet": "Claude 3.5 Sonnet",
+    "openai/gpt-4o": "GPT-4o",
+    "meta-llama/llama-3.3-70b-instruct": "Llama 3.3 70B",
+    "deepseek/deepseek-r1": "DeepSeek R1 (Thinking)"
 }
 
 system_prompt = """You are an expert meeting facilitator and business analyst.
 Your task is to transform raw meeting notes into clear, structured, actionable output.
 
-Reply with exactly four sections using these headings (in the language the notes are written in):
+IMPORTANT: You MUST reply in the exact same language that the notes are written in. If the notes are in English, reply in English. If the notes are in Finnish, reply in Finnish. Never reply in German unless the notes are in German. If the language is too short or ambiguous, default to English.
+
+Reply with exactly four sections using these headings (translated to the target language):
 
 ### ✅ Key Decisions
 List the concrete decisions made during the meeting as bullet points.
@@ -68,7 +71,7 @@ class Meeting(BaseModel):
     topic: str
     meeting_date: str
     notes: str
-    model: str = "gemini-2.5-flash-lite"
+    model: str = "google/gemini-2.5-flash"
 
 def user_prompt_for(meeting: Meeting) -> str:
     return f"""Please process these meeting notes:
@@ -82,23 +85,13 @@ Raw Notes:
 
 # ------------- Streaming helpers -------------
 
-def stream_gemini(meeting: Meeting):
-    model = genai.GenerativeModel(
-        meeting.model,
-        system_instruction=system_prompt
-    )
-    response = model.generate_content(user_prompt_for(meeting), stream=True)
-    for chunk in response:
-        try:
-            if chunk.text:
-                yield f"data: {json.dumps(chunk.text)}\n\n"
-        except Exception:
-            continue
-
-
-def stream_openai(meeting: Meeting):
+def stream_openrouter(meeting: Meeting):
     from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY,
+    )
+    
     stream = client.chat.completions.create(
         model=meeting.model,
         messages=[
@@ -106,11 +99,44 @@ def stream_openai(meeting: Meeting):
             {"role": "user", "content": user_prompt_for(meeting)},
         ],
         stream=True,
+        # Osa OpenRouterin reasoning-malleista vaatii erillisen parametrin (esim. include_reasoning)
+        extra_headers={
+            "HTTP-Referer": "https://meetingmind.pro",
+            "X-Title": "MeetingMind Pro"
+        },
+        extra_body={
+            "include_reasoning": True
+        }
     )
+    
+    first_thinking = True
     for chunk in stream:
-        text = chunk.choices[0].delta.content
-        if text:
-            yield f"data: {json.dumps(text)}\n\n"
+        delta = chunk.choices[0].delta
+        
+        # Osa SDK/malleista (esim DeepSeek OpenRouterissa) palauttaa 'reasoning' Pydantic-mallin extra-kentissä
+        reasoning_text = ""
+        
+        try:
+            print("STREAM DEBUG DELTA:", delta.model_dump())
+        except Exception:
+            try:
+                print("STREAM DEBUG DELTA DICT:", delta.__dict__)
+            except Exception:
+                pass
+        
+        if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+            reasoning_text = delta.reasoning_content
+        elif getattr(delta, 'model_extra', None) and delta.model_extra.get('reasoning'):
+            reasoning_text = delta.model_extra.get('reasoning')
+
+        if reasoning_text:
+            # Ilmoitetaan UI:lle että tämä on reasoningia eikä lopullista tekstiä
+            yield f"data: {json.dumps({'type': 'thinking', 'content': reasoning_text})}\n\n"
+        
+        elif delta.content:
+            text = delta.content
+            # Tavallinen teksti
+            yield f"data: {json.dumps({'type': 'text', 'content': text})}\n\n"
 
 
 # ------------- API Endpoints -------------
@@ -141,30 +167,22 @@ async def meeting_summary(
 
     def event_stream():
         try:
-            if meeting.model.startswith("gemini"):
-                if not api_key:
-                    yield "data: Error: GOOGLE_API_KEY is missing.\n\n"
-                    return
-                yield from stream_gemini(meeting)
-
-            elif meeting.model.startswith("gpt"):
-                if not os.getenv("OPENAI_API_KEY"):
-                    yield "data: Error: OPENAI_API_KEY is missing.\n\n"
-                    return
-                yield from stream_openai(meeting)
-
-            else:
-                yield f"data: Error: Unknown model '{meeting.model}'.\n\n"
+            if not OPENROUTER_API_KEY:
+                yield "data: Error: OPENROUTER_API_KEY is missing.\n\n"
                 return
 
-            # Send metadata at the end
+            # Kaikki mallit käytetään OpenRouterin kautta samoilla säännöillä
+            yield from stream_openrouter(meeting)
+
+            # --- Observability: Send metadata at the end ---
             elapsed = round(time.time() - start_time, 2)
-            yield f"data: \n\n"
-            yield f"data: ---\n\n"
-            yield f"data: ⏱ Generated in {elapsed}s · Model: {AVAILABLE_MODELS.get(meeting.model, meeting.model)}\n\n"
+            model_name = AVAILABLE_MODELS.get(meeting.model, meeting.model)
+            yield f"data: {json.dumps({'type': 'text', 'content': chr(10) + chr(10)})}\n\n"
+            yield f"data: {json.dumps({'type': 'text', 'content': '---'})}\n\n"
+            yield f"data: {json.dumps({'type': 'text', 'content': chr(10) + chr(10) + f'⏱ **{model_name}** completed the task in **{elapsed}s**'})}\n\n"
 
         except Exception as e:
-            yield f"data: Error: {str(e)}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
 
     return StreamingResponse(
         event_stream(),
