@@ -131,10 +131,12 @@ async def meeting_summary(
         try:
             creds = await clerk_guard(request)
         except Exception as e:
-            # Jätetään huomiotta lokaalissa testissä jotta sovellus toimii,
-            # koska Clerk JWT varmennus tyypillisesti kaatuu localhostissa 
-            # asetuseroihin tai kellon aikoihin pyydettäessä toisesta portista.
-            pass
+            # Salli JWT-ohitus vain lokaalissa kehityksessä, jos erikseen määritetty
+            if os.getenv("ENVIRONMENT") == "development":
+                print(f"DEV WARNING: Ohitetaan auth-virhe: {e}")
+                pass
+            else:
+                raise HTTPException(status_code=401, detail=f"Invalid or missing authentication token: {e}")
     # ----------------------------------------------------
 
     def event_stream():

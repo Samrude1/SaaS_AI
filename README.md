@@ -1,6 +1,6 @@
-# 🏥 MediNotes Pro — AI-Powered Healthcare Assistant
+# 🤝 MeetingMind Pro — AI-Powered Meeting Assistant
 
-**MediNotes Pro** on ammattitasoinen SaaS-sovellus, joka on suunniteltu auttamaan lääkäreitä ja terveydenhuollon ammattilaisia optimoimaan potilaskirjausten tekemistä. Sovellus muuntaa vapaamuotoiset vastaanotto-muistiinpanot jäsennellyksi lääketieteelliseksi dokumentaatioksi ja potilasviestinnäksi.
+**MeetingMind Pro** on ammattitasoinen SaaS-sovellus, joka on suunniteltu auttamaan tiimejä ja asiantuntijoita optimoimaan kokousmuistioiden tekemistä. Sovellus muuntaa vapaamuotoiset kokousmuistiinpanot jäsennellyiksi päätöksiksi, tehtäviksi ja viestinnäksi.
 
 ![Status](https://img.shields.io/badge/Status-Cloud%20Production-success?style=for-the-badge)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)
@@ -11,9 +11,9 @@
 
 ## ✨ Tärkeimmät ominaisuudet
 
-- **📋 Automaattiset yhteenvedot**: Luo lääketieteelliset yhteenvedot suoraan potilaskertomukseen.
-- **🚀 Jatkotoimenpiteet**: Tunnistaa automaattisesti lääkärin määräämät jatko-ohjeet ja tutkimukset.
-- **📧 Potilasystävällinen viestintä**: Luonnostelee selkokielisen sähköpostiviestin potilaalle ymmärrettävässä muodossa.
+- **📋 Automaattiset yhteenvedot**: Tunnistaa ja listaa kokouksen keskeiset päätökset.
+- **🚀 Action Items**: Poimii automaattisesti delegoidut tehtävät vastuuhenkilöineen.
+- **📧 Valmis viestintä**: Luonnostelee tiiviit Slack-päivitykset ja sähköpostit osallistujille.
 - **🛡️ Turvallinen arkkitehtuuri**: Käyttäjänhallinta ja suojatut rajapinnat (Clerk Auth).
 - **⚡ Reaaliaikainen analyysi**: Hyödyntää striimaavaa tekoälyä (Server-Sent Events) välittömään palautteeseen.
 - **🐳 Kontitettu julkaisu**: Toimii identtisesti missä tahansa ympäristössä Dockerin avulla.
@@ -42,11 +42,11 @@ Sovellus käyttää **unified container** -mallia, jossa Python-backend tarjoile
 1. **Konfiguroi ympäristö**: Kopioi `.env.local` arvot `.env` -tiedostoon.
 2. **Rakenna kuva**:
    ```powershell
-   docker build --platform linux/amd64 -t medinotes-pro .
+   docker build --platform linux/amd64 -t meetingmind-pro .
    ```
 3. **Aja paikallisesti**:
    ```powershell
-   docker run -p 8000:8000 --env-file .env medinotes-pro
+   docker run -p 8000:8000 --env-file .env meetingmind-pro
    ```
 
 ---
