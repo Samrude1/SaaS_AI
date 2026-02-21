@@ -39,7 +39,10 @@ Seamlessly switch between top-tier models with a single implementation.
 ### 2. Transparent Reasoning (CoT)
 One of the core portfolio highlights is the **Real-Time Cognitive Process** view. The system parses specific reasoning tokens from the SSE stream and renders them in a dedicated terminal-style UI, allowing users to see the AI's internal logic before the final output.
 
-### 3. Observability & Latency Tracking
+### 3. Dynamic Multi-Agent Orchestration
+The system features a **Master AI** that analyzes meeting context and dynamically assembles a team of 3 specialized AI agents on the fly. Each agent performs a deep-dive analysis from their specific expert perspective, which the Lead Facilitator then synthesizes into a final executive report.
+
+### 4. Observability & Latency Tracking
 The backend tracks end-to-end processing time for every request, providing visibility into model performance and latency metrics directly in the UI.
 
 ---

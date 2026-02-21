@@ -16,8 +16,16 @@ const MODELS = [
     { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', badge: 'Best Overall', color: 'text-amber-400' },
     { value: 'openai/gpt-4o', label: 'GPT-4o', badge: 'Accurate', color: 'text-emerald-400' },
     { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B', badge: 'Open Source', color: 'text-rose-400' },
-    { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1', badge: 'Reasoning CoT', color: 'text-fuchsia-400' }
+    { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1', badge: 'Reasoning CoT', color: 'text-fuchsia-400' },
+    { value: 'multi-agent-orchestrator', label: 'Multi-Agent Orchestration', badge: 'Master AI Team', color: 'text-cyan-400' }
 ];
+
+type AgentInfo = {
+    name: string;
+    role: string;
+    status: 'pending' | 'working' | 'done';
+    output: string;
+};
 
 function MeetingForm() {
     const { getToken } = useAuth();
@@ -31,12 +39,18 @@ function MeetingForm() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isThinkingActive, setIsThinkingActive] = useState(false);
 
+    // Orchestration State
+    const [agents, setAgents] = useState<AgentInfo[]>([]);
+    const [orchestrationStatus, setOrchestrationStatus] = useState('');
+
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
         setIsGenerating(true);
         setOutput('');
         setThinkingOutput('');
         setIsThinkingActive(false);
+        setAgents([]);
+        setOrchestrationStatus('');
         let textBuffer = '';
         let thinkBuffer = '';
 
@@ -66,6 +80,14 @@ function MeetingForm() {
                             setIsThinkingActive(false);
                             textBuffer += payload.content;
                             setOutput(textBuffer);
+                        } else if (payload.type === 'status') {
+                            setOrchestrationStatus(payload.content);
+                        } else if (payload.type === 'agent_start') {
+                            setAgents(prev => [...prev, { name: payload.agent, role: payload.role, status: 'working', output: '' }]);
+                        } else if (payload.type === 'agent_text') {
+                            setAgents(prev => prev.map(a => a.name === payload.agent ? { ...a, output: a.output + payload.content } : a));
+                        } else if (payload.type === 'agent_done') {
+                            setAgents(prev => prev.map(a => a.name === payload.agent ? { ...a, status: 'done' } : a));
                         } else if (payload.type === 'error') {
                             textBuffer += "\\n**Error:** " + payload.content;
                             setOutput(textBuffer);
@@ -187,6 +209,48 @@ function MeetingForm() {
 
                 {/* ── Output Side ── */}
                 <div className="relative min-h-[600px] flex flex-col gap-6">
+
+                    {/* Orchestration Panel */}
+                    <AnimatePresence>
+                        {agents.length > 0 && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass p-6 rounded-3xl border-cyan-500/20 shadow-[0_0_30px_rgba(6,182,212,0.1)] space-y-4"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <RefreshCw className={`w-4 h-4 text-cyan-400 ${isGenerating ? 'animate-spin' : ''}`} />
+                                        <span className="text-cyan-400 font-bold text-xs uppercase tracking-widest">Dynamic Expert Team</span>
+                                    </div>
+                                    <span className="text-slate-500 text-[10px] font-mono">{orchestrationStatus}</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    {agents.map((agent, i) => (
+                                        <motion.div
+                                            key={agent.name}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.1 }}
+                                            className="bg-slate-950/40 border border-white/5 p-4 rounded-2xl"
+                                        >
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${agent.status === 'working' ? 'bg-cyan-400 animate-ping' : agent.status === 'done' ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                                                    <span className="text-white font-bold text-sm">{agent.name}</span>
+                                                    <span className="text-slate-500 text-xs">— {agent.role}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-xs text-slate-400 leading-relaxed font-mono line-clamp-3">
+                                                {agent.output || (agent.status === 'working' ? 'Analyzing...' : 'Waiting...')}
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Thinking Process Panel */}
                     <AnimatePresence>

@@ -35,14 +35,13 @@ else:
 clerk_config = ClerkConfig(jwks_url=jwks_url)
 clerk_guard = ClerkHTTPBearer(clerk_config)
 
-# ------------- Models & Prompts -------------
-
 AVAILABLE_MODELS = {
     "google/gemini-2.5-flash": "Gemini 2.5 Flash",
     "anthropic/claude-3.5-sonnet": "Claude 3.5 Sonnet",
     "openai/gpt-4o": "GPT-4o",
     "meta-llama/llama-3.3-70b-instruct": "Llama 3.3 70B",
-    "deepseek/deepseek-r1": "DeepSeek R1 (Thinking)"
+    "deepseek/deepseek-r1": "DeepSeek R1 (Thinking)",
+    "multi-agent-orchestrator": "Multi-Agent Orchestration (Master AI)"
 }
 
 system_prompt = """You are an expert meeting facilitator and business analyst.
@@ -99,7 +98,6 @@ def stream_openrouter(meeting: Meeting):
             {"role": "user", "content": user_prompt_for(meeting)},
         ],
         stream=True,
-        # Osa OpenRouterin reasoning-malleista vaatii erillisen parametrin (esim. include_reasoning)
         extra_headers={
             "HTTP-Referer": "https://meetingmind.pro",
             "X-Title": "MeetingMind Pro"
@@ -109,20 +107,9 @@ def stream_openrouter(meeting: Meeting):
         }
     )
     
-    first_thinking = True
     for chunk in stream:
         delta = chunk.choices[0].delta
-        
-        # Osa SDK/malleista (esim DeepSeek OpenRouterissa) palauttaa 'reasoning' Pydantic-mallin extra-kentissä
         reasoning_text = ""
-        
-        try:
-            print("STREAM DEBUG DELTA:", delta.model_dump())
-        except Exception:
-            try:
-                print("STREAM DEBUG DELTA DICT:", delta.__dict__)
-            except Exception:
-                pass
         
         if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
             reasoning_text = delta.reasoning_content
@@ -130,13 +117,111 @@ def stream_openrouter(meeting: Meeting):
             reasoning_text = delta.model_extra.get('reasoning')
 
         if reasoning_text:
-            # Ilmoitetaan UI:lle että tämä on reasoningia eikä lopullista tekstiä
             yield f"data: {json.dumps({'type': 'thinking', 'content': reasoning_text})}\n\n"
-        
         elif delta.content:
-            text = delta.content
-            # Tavallinen teksti
-            yield f"data: {json.dumps({'type': 'text', 'content': text})}\n\n"
+            yield f"data: {json.dumps({'type': 'text', 'content': delta.content})}\n\n"
+
+def orchestrate_meeting(meeting: Meeting):
+    from openai import OpenAI
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY,
+    )
+    
+    # 1. Master AI: Define 3 Agents
+    yield f"data: {json.dumps({'type': 'status', 'content': 'Master AI is analyzing the notes and assembling the team...'})}\n\n"
+    
+    master_prompt = f"""You are the Master AI of MeetingMind Pro. 
+Analyze the following meeting metadata and notes. 
+Your goal is to define 3 diverse expert AI agent roles that would provide the most value analyzing this specific meeting.
+
+Meeting Topic: {meeting.topic}
+Notes: {meeting.notes}
+
+Return EXACTLY a JSON object with this structure:
+{{
+  "agents": [
+    {{ "name": "Agent Name", "role": "Expert Role", "focus": "What they should focus on (1 sentence)" }},
+    {{ "name": "Agent Name", "role": "Expert Role", "focus": "What they should focus on (1 sentence)" }},
+    {{ "name": "Agent Name", "role": "Expert Role", "focus": "What they should focus on (1 sentence)" }}
+  ]
+}}
+"""
+    
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-4o",
+            messages=[{"role": "user", "content": master_prompt}],
+            response_format={ "type": "json_object" }
+        )
+        
+        config = json.loads(response.choices[0].message.content)
+        agents = config.get("agents", [])
+        
+        agent_names = ", ".join([a["name"] for a in agents])
+        yield f"data: {json.dumps({'type': 'status', 'content': f'Team of experts assembled: {agent_names}'})}\n\n"
+        
+        agent_outputs = []
+        
+        # 2. Sequential Agent Execution
+        for i, agent in enumerate(agents):
+            yield f"data: {json.dumps({'type': 'agent_start', 'agent': agent['name'], 'role': agent['role']})}\n\n"
+            
+            agent_prompt = f"""You are {agent['name']}, an expert {agent['role']}.
+Your focus is: {agent['focus']}
+
+Analyze these meeting notes from your unique perspective and provide deep insights:
+Topic: {meeting.topic}
+Notes: {meeting.notes}
+
+Format your response as a concise, expert analysis (max 150 words). Reply in the same language as the notes."""
+
+            agent_content = ""
+            stream = client.chat.completions.create(
+                model="google/gemini-2.5-flash", 
+                messages=[{"role": "user", "content": agent_prompt}],
+                stream=True
+            )
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    text = chunk.choices[0].delta.content
+                    agent_content += text
+                    yield f"data: {json.dumps({'type': 'agent_text', 'agent': agent['name'], 'content': text})}\n\n"
+            
+            agent_outputs.append({"name": agent['name'], "output": agent_content})
+            yield f"data: {json.dumps({'type': 'agent_done', 'agent': agent['name']})}\n\n"
+
+        # 3. Final Synthesis
+        yield f"data: {json.dumps({'type': 'status', 'content': 'Synthesizing final executive report...'})}\n\n"
+        
+        synthesis_prompt = f"""You are the Lead Facilitator. Combine the insights from these 3 experts into the final MeetingMind Pro report.
+
+Expert Insights:
+{chr(10).join([f"### {a['name']} Analysis: {chr(10)} {a['output']}" for a in agent_outputs])}
+
+Original Meeting Data:
+Topic: {meeting.topic}
+Notes: {meeting.notes}
+
+Follow the standard MeetingMind Pro format strictly:
+### ✅ Key Decisions
+### 🎯 Action Items (Table: Task | Owner | Deadline)
+### 📣 Slack Summary
+### 📧 Follow-up Email Draft
+
+IMPORTANT: Reply in the same language as the notes."""
+
+        stream = client.chat.completions.create(
+            model="anthropic/claude-3.5-sonnet",
+            messages=[{"role": "user", "content": synthesis_prompt}],
+            stream=True
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield f"data: {json.dumps({'type': 'text', 'content': chunk.choices[0].delta.content})}\n\n"
+
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'content': f'Orchestration failed: {str(e)}'})}\n\n"
 
 
 # ------------- API Endpoints -------------
@@ -157,10 +242,8 @@ async def meeting_summary(
         try:
             creds = await clerk_guard(request)
         except Exception as e:
-            # Salli JWT-ohitus vain lokaalissa kehityksessä, jos erikseen määritetty
             if os.getenv("ENVIRONMENT") == "development":
                 print(f"DEV WARNING: Ohitetaan auth-virhe: {e}")
-                pass
             else:
                 raise HTTPException(status_code=401, detail=f"Invalid or missing authentication token: {e}")
     # ----------------------------------------------------
@@ -168,18 +251,20 @@ async def meeting_summary(
     def event_stream():
         try:
             if not OPENROUTER_API_KEY:
-                yield "data: Error: OPENROUTER_API_KEY is missing.\n\n"
+                yield f"data: {json.dumps({'type': 'error', 'content': 'OPENROUTER_API_KEY is missing'})}\n\n"
                 return
 
-            # Kaikki mallit käytetään OpenRouterin kautta samoilla säännöillä
-            yield from stream_openrouter(meeting)
+            if meeting.model == "multi-agent-orchestrator":
+                yield from orchestrate_meeting(meeting)
+            else:
+                yield from stream_openrouter(meeting)
 
             # --- Observability: Send metadata at the end ---
             elapsed = round(time.time() - start_time, 2)
-            model_name = AVAILABLE_MODELS.get(meeting.model, meeting.model)
+            model_display_name = AVAILABLE_MODELS.get(meeting.model, meeting.model)
             yield f"data: {json.dumps({'type': 'text', 'content': chr(10) + chr(10)})}\n\n"
             yield f"data: {json.dumps({'type': 'text', 'content': '---'})}\n\n"
-            yield f"data: {json.dumps({'type': 'text', 'content': chr(10) + chr(10) + f'⏱ **{model_name}** completed the task in **{elapsed}s**'})}\n\n"
+            yield f"data: {json.dumps({'type': 'text', 'content': chr(10) + chr(10) + f'⏱ **{model_display_name}** completed the task in **{elapsed}s**'})}\n\n"
 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
@@ -192,9 +277,6 @@ async def meeting_summary(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         }
-    )
-
-
 @app.get("/api/models")
 def list_models():
     """Returns list of available AI models."""
