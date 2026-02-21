@@ -4,8 +4,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <title>Healthcare Consultation Assistant</title>
-        <meta name="description" content="AI-powered medical consultation summaries" />
+        <title>MeetingMind Pro — AI-Powered Meeting Assistant</title>
+        <meta name="description" content="AI-powered meeting consultation and action item generation" />
       </Head>
       <body className="antialiased">
         <Main />

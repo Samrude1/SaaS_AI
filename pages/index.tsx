@@ -119,7 +119,7 @@ export default function Home() {
           {/* Model badges */}
           <motion.div variants={itemVariants} className="mt-12 flex items-center justify-center gap-4 flex-wrap">
             <span className="text-slate-600 text-sm">Powered by</span>
-            {["Gemini 2.5 Flash-Lite", "GPT-4o Mini"].map(m => (
+            {["Gemini", "Claude", "GPT-4o", "DeepSeek"].map(m => (
               <span key={m} className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-slate-400 text-xs font-mono">{m}</span>
             ))}
           </motion.div>
