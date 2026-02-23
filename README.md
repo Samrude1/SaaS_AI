@@ -1,5 +1,7 @@
 # 🤝 MeetingMind Pro — Enterprise AI Meeting Intelligence
 
+![MeetingMind Pro Multi-Agent Demo](./docs/multiagent-demo.png)
+
 **MeetingMind Pro** is a high-performance SaaS application designed to transform raw, unstructured meeting notes into professional, actionable summaries. It leverages state-of-the-art LLMs via **OpenRouter**, featuring real-time reasoning visualization and cross-model performance tracking.
 
 ---
@@ -29,29 +31,36 @@ The application is built on a **Unified Container Architecture**, optimized for 
 
 ---
 
-## 🧠 AI Engineering Features
+## 🧠 AI Engineering Features & How to Use the App
 
-### 1. Multi-Model Support (OpenRouter)
-Seamlessly switch between top-tier models with a single implementation.
-- **Reasoning Models**: DeepSeek R1 & o1 support with native **Chain-of-Thought** visualization.
-- **Performance Models**: Gemini 2.5 Flash & Claude 3.5 Sonnet.
+When using the MeetingMind Pro dashboard, you can choose between **Two Execution Modes** from the model dropdown menu. These modes demonstrate different approaches to AI engineering:
+
+### Mode 1: Single Model Execution (Direct Inference)
+Select any standard model from the dropdown (e.g., `Gemini 2.5 Flash`, `Claude 3.5 Sonnet`, `DeepSeek R1`). 
+- **How it works:** The system extracts your raw meeting notes and sends them directly to the chosen model using a single, comprehensive system prompt.
+- **Why use it:** Perfect for testing how different models handle the exact same prompt. You can compare the formatting, logic, and speed (latency) of standard models vs. reasoning models (like DeepSeek R1, which natively streams its chain-of-thought).
+
+### Mode 2: Multi-Agent Orchestration ("Master AI")
+Select `"Multi-Agent Orchestration (Master AI)"` from the dropdown. 
+- **How it works:** This hands over the control to an agency of LLMs rather than a single model. The system intelligently routes tasks between different models based on their strengths (orchestrated by the backend).
+- **Why use it:** Demonstrates advanced enterprise-grade AI patterns. The user doesn't need to know which model is best—the system handles the cognitive load.
 
 ### 2. Transparent Reasoning (CoT)
 One of the core portfolio highlights is the **Real-Time Cognitive Process** view. The system parses specific reasoning tokens from the SSE stream and renders them in a dedicated terminal-style UI, allowing users to see the AI's internal logic before the final output.
 
-### 3. Dynamic Multi-Agent Orchestration (LLM Mesh)
-A sophisticated multi-stage orchestration that demonstrates advanced AI agent patterns:
-- **Master Orchestrator (GPT-4o)**: Analyzes the raw notes and dynamically defines 3 expert personas tailored to the meeting's context.
-- **Expert Analysis (Gemini 2.5 Flash)**: The 3 agents perform parallel, focused deep-dives from their unique perspectives.
-- **Synthetic Finalization (Claude 3.5 Sonnet)**: A lead facilitator synthesizes the agent insights and original notes into a cohesive, executive-level report.
-- **Real-time Visualization**: Users can monitor the expert team creation and individual agent analyses through a dedicated UI panel.
+### Deep Dive: How the LLM Mesh (Mode 2) Works
+When you select the Multi-Agent mode, the backend automatically triggers a sophisticated 3-stage orchestration:
+1. **Master Orchestrator (GPT-4o)**: Analyzes the raw notes and dynamically defines exactly 3 expert personas tailored to the specific meeting's context (e.g., if it's a tech meeting, it might spawn a "DevOps Expert" and "Product Manager").
+2. **Expert Analysis (Gemini 2.5 Flash)**: The 3 generated agents perform parallel, focused deep-dives from their unique perspectives. Gemini Flash is used here for its high speed and low cost.
+3. **Synthetic Finalization (Claude 3.5 Sonnet)**: A Lead Facilitator agent reads the insights from all 3 experts along with the original notes, synthesizing them into the final, cohesive executive-level report. 
+- **Real-time Visualization**: Users can monitor this entire team creation and individual agent analyses streaming live through a dedicated UI panel before the final report is generated.
 
 ### 4. Observability & Latency Tracking
 The backend tracks end-to-end processing time for every request, providing visibility into model performance and latency metrics directly in the UI.
 
 ---
 
-## � Future Roadmap & Enterprise Strategy
+##  Future Roadmap & Enterprise Strategy
 Designed with scalability and cost-efficiency in mind, the platform is ready for the next level of Agentic Workflows:
 - **Cost-Optimized Routing**: Implementation of a "Router Agent" to dynamically select models based on context length and task complexity (e.g., Flash models for simple notes, Gemini 3.1 Pro for massive technical documentation).
 - **Autonomous Quality Verification (Self-Correction)**: Integrating a "Reviewer Agent" to perform a critique-and-refine loop on agent outputs before final synthesis.
@@ -60,11 +69,12 @@ Designed with scalability and cost-efficiency in mind, the platform is ready for
 
 ---
 
-## �🛡️ Security & Authentication
+## �️ Security & Authentication
 
 Security is "Secure by Default":
 - **Clerk Integration**: Full user lifecycle management.
 - **JWT Validation**: The FastAPI backend validates every incoming request's Bearer token against Clerk's JWKS.
+- **API Cost Controls**: Hard credit limits ($15/mo) set at the OpenRouter level with Auto-Topup disabled to ensure public demo safety.
 - **Environment Isolation**: Secure handling of API keys and environment-specific bypasses for local development.
 
 ---

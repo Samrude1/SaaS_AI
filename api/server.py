@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -277,6 +276,7 @@ async def meeting_summary(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
         }
+    )
 @app.get("/api/models")
 def list_models():
     """Returns list of available AI models."""
