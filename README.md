@@ -1,6 +1,6 @@
 # 🤝 MeetingMind Pro — Enterprise AI Meeting Intelligence
 
-![MeetingMind Pro Multi-Agent Demo](./docs/multiagent-demo.png)
+![MeetingMind Pro Multi-Agent Demo](./docs/pic1.png)
 
 **MeetingMind Pro** is a high-performance SaaS application designed to transform raw, unstructured meeting notes into professional, actionable summaries. It leverages state-of-the-art LLMs via **OpenRouter**, featuring real-time reasoning visualization and cross-model performance tracking.
 
