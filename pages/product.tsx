@@ -7,7 +7,7 @@ import { useAuth, Protect, PricingTable, UserButton } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, FileText, RefreshCw, Calendar, MessageSquare, Zap, ChevronDown } from 'lucide-react';
+import { Sparkles, FileText, RefreshCw, Calendar, MessageSquare, Zap, ChevronDown, Download } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 
@@ -38,6 +38,7 @@ function MeetingForm() {
     const [thinkingOutput, setThinkingOutput] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [isThinkingActive, setIsThinkingActive] = useState(false);
+    const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
 
     // Orchestration State
     const [agents, setAgents] = useState<AgentInfo[]>([]);
@@ -105,6 +106,41 @@ function MeetingForm() {
         } catch (error) {
             console.error('Submission failed:', error);
             setIsGenerating(false);
+        }
+    }
+
+    async function handleDownloadPDF() {
+        const element = document.getElementById('report-content');
+        if (!element) return;
+
+        // Koska npm install feilasi sandboxin takia, ladataan html2pdf.js dynaamisesti CDN:stä
+        if (typeof window !== 'undefined' && !(window as any).html2pdf) {
+            setIsDownloadingPDF(true);
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = () => generatePDF(element);
+            document.head.appendChild(script);
+        } else {
+            setIsDownloadingPDF(true);
+            generatePDF(element);
+        }
+
+        function generatePDF(el: HTMLElement) {
+            const opt = {
+                margin: [15, 15], // Turvamarginaalit PDF:n ylös ja sivuille
+                filename: `Meeting_Report_${meetingDate?.toISOString().slice(0, 10)}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Add a temporary wrapper class for styling if needed before printing
+            el.classList.add('pdf-export-mode');
+
+            (window as any).html2pdf().set(opt).from(el).save().then(() => {
+                el.classList.remove('pdf-export-mode');
+                setIsDownloadingPDF(false);
+            });
         }
     }
 
@@ -305,8 +341,23 @@ function MeetingForm() {
                                     </div>
                                 ) : (
                                     // Done: render beautiful markdown
-                                    <div className="markdown-content">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+                                    <div className="relative">
+                                        <div className="flex items-center justify-end mb-4">
+                                            <button
+                                                onClick={handleDownloadPDF}
+                                                disabled={isDownloadingPDF}
+                                                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-white/10"
+                                            >
+                                                {isDownloadingPDF ? (
+                                                    <><RefreshCw className="w-4 h-4 animate-spin" /> Preparing PDF...</>
+                                                ) : (
+                                                    <><Download className="w-4 h-4" /> Download PDF</>
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div id="report-content" className="markdown-content bg-slate-950/20 p-6 rounded-2xl">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+                                        </div>
                                     </div>
                                 )}
                             </motion.div>
